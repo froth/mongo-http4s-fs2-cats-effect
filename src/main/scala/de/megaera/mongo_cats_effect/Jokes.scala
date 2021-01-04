@@ -38,7 +38,7 @@ object Jokes {
     def get: Stream[F, Joke] = {
       val response = C.expect[Joke](GET(uri"https://icanhazdadjoke.com/"))
         .adaptError{ case t => JokeError(t)} // Prevent Client Json Decoding Failure Leaking
-      Stream.eval(response)
+      Stream.eval(response).repeatN(5)
     }
   }
 }
