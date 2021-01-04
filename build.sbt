@@ -22,6 +22,7 @@ lazy val root = (project in file("."))
       "org.typelevel" %% "munit-cats-effect-2" % MunitCatsEffectVersion % Test,
       "ch.qos.logback" % "logback-classic" % LogbackVersion,
       "org.mongodb.scala" %% "mongo-scala-driver" % MongoScalaDriverVersion,
+      "co.fs2" %% "fs2-reactive-streams" % "2.5.0",
       "de.megaera" %% "medeia" % MedeiaVersion,
     ),
     addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),

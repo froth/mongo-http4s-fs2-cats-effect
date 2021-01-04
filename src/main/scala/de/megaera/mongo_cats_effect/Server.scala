@@ -3,7 +3,6 @@ package de.megaera.mongo_cats_effect
 import cats.effect.{ConcurrentEffect, Timer}
 import cats.implicits._
 import fs2.Stream
-import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.Logger
@@ -13,10 +12,10 @@ object Server {
 
   def stream[F[_]: ConcurrentEffect](implicit T: Timer[F]): Stream[F, Nothing] = {
     for {
-      httpClient <- BlazeClientBuilder[F](global).stream
+//      httpClient <- BlazeClientBuilder[F](global).stream
       mongoClient <- Stream.resource(MongoClientResource.create[F]())
       helloWorldAlg = HelloWorld.impl[F]
-      jokeAlg = Jokes.impl[F](httpClient)
+      jokeAlg = Jokes.implMongo[F](mongoClient)
 
       // Combine Service Routes into an HttpApp.
       // Can also be done via a Router if you
