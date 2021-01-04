@@ -11,9 +11,10 @@ import org.http4s.client.Client
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.circe._
 import org.http4s.Method._
+import fs2.Stream
 
 trait Jokes[F[_]]{
-  def get: F[Jokes.Joke]
+  def get: Stream[F, Jokes.Joke]
 }
 
 object Jokes {
@@ -34,9 +35,10 @@ object Jokes {
   def impl[F[_]: Sync](C: Client[F]): Jokes[F] = new Jokes[F]{
     val dsl: Http4sClientDsl[F] = new Http4sClientDsl[F]{}
     import dsl._
-    def get: F[Jokes.Joke] = {
-      C.expect[Joke](GET(uri"https://icanhazdadjoke.com/"))
+    def get: Stream[F, Joke] = {
+      val response = C.expect[Joke](GET(uri"https://icanhazdadjoke.com/"))
         .adaptError{ case t => JokeError(t)} // Prevent Client Json Decoding Failure Leaking
+      Stream.eval(response)
     }
   }
 }
