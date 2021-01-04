@@ -13,9 +13,10 @@ object Server {
 
   def stream[F[_]: ConcurrentEffect](implicit T: Timer[F]): Stream[F, Nothing] = {
     for {
-      client <- BlazeClientBuilder[F](global).stream
+      httpClient <- BlazeClientBuilder[F](global).stream
+      mongoClient <- Stream.resource(MongoClientResource.create[F]())
       helloWorldAlg = HelloWorld.impl[F]
-      jokeAlg = Jokes.impl[F](client)
+      jokeAlg = Jokes.impl[F](httpClient)
 
       // Combine Service Routes into an HttpApp.
       // Can also be done via a Router if you
@@ -27,7 +28,7 @@ object Server {
       ).orNotFound
 
       // With Middlewares in place
-      finalHttpApp = Logger.httpApp(true, true)(httpApp)
+      finalHttpApp = Logger.httpApp(logHeaders = true, logBody = true)(httpApp)
 
       exitCode <- BlazeServerBuilder[F](global)
         .bindHttp(8080, "0.0.0.0")
