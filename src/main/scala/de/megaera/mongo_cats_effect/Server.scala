@@ -16,16 +16,20 @@ import scala.concurrent.ExecutionContext.global
 object Server {
   implicit def unsafeLogger[F[_]: Sync]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLogger[F]
 
+  /*
+    Import jokes from internet into mongo on startup and stream via http on request
+   */
   def stream[F[_]: ConcurrentEffect: Timer]: Stream[F, Nothing] = {
     for {
       httpClient <- BlazeClientBuilder[F](global).stream
       jokesCollection <- Stream.resource(MongoCollectionResource.create[F]())
-      helloWorldAlg = HelloWorld.impl[F]
       jokesMongoRepo = JokesMongoRepository[F](jokesCollection)
       jokesWebRepo = JokesWebRepository[F](httpClient)
 
+      // import jokes
       _ <- jokesWebRepo.get.through(jokesMongoRepo.write).foldMonoid.evalMap(count => Logger[F].info(s"Imported $count"))
 
+      helloWorldAlg = HelloWorld.impl[F]
       httpApp = (
         Routes.helloWorldRoutes[F](helloWorldAlg) <+>
         Routes.jokeRoutes[F](jokesMongoRepo)
