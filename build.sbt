@@ -5,6 +5,7 @@ val LogbackVersion = "1.2.3"
 val MunitCatsEffectVersion = "0.12.0"
 val MongoScalaDriverVersion = "4.1.1"
 val MedeiaVersion = "0.4.2"
+val Log4CatsVersion = "1.1.1"
 
 lazy val root = (project in file("."))
   .settings(
@@ -24,6 +25,8 @@ lazy val root = (project in file("."))
       "org.mongodb.scala" %% "mongo-scala-driver" % MongoScalaDriverVersion,
       "co.fs2" %% "fs2-reactive-streams" % "2.5.0",
       "de.megaera" %% "medeia" % MedeiaVersion,
+      "io.chrisdavenport" %% "log4cats-core"    % Log4CatsVersion,  // Only if you want to Support Any Backend
+      "io.chrisdavenport" %% "log4cats-slf4j"   % Log4CatsVersion  // Direct Slf4j Support - Recommended
     ),
     addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
