@@ -19,7 +19,7 @@ object JokesMongoRepository {
       } yield joke
     }
 
-    override def write: Pipe[F, Joke, UpdateCount] = in => in.chunkN(10, allowFewer = true).flatMap(joke => writeBatch(joke))
+    override def write: Pipe[F, Joke, UpdateCount] = in => in.chunkN(10, allowFewer = true).flatMap(joke => writeBatch(joke.toList))
 
     private[this] def writeBatch(jokes: List[Joke]): Stream[F, UpdateCount] = {
       val jokeDocuments: List[Document] = jokes.map(_.toBsonDocument)
