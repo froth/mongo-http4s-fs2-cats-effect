@@ -13,7 +13,7 @@ object JokesMongoRepository {
   def apply[F[_] : ConcurrentEffect](C: MongoCollection[Document]): JokesMongoRepository[F] = new JokesMongoRepository[F] {
     override def get: Stream[F, Joke] = {
       for {
-        find <- Stream.eval(Sync[F].delay(C.find))
+        find <- Stream.eval(Sync[F].delay(C.find()))
         document <- find.toStream
         joke <- Stream.fromEither(document.fromBson[Joke].left.map(_.head))
       } yield joke
