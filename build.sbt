@@ -4,7 +4,7 @@ val MunitVersion = "0.7.20"
 val LogbackVersion = "1.2.3"
 val MunitCatsEffectVersion = "0.12.0"
 val MongoScalaDriverVersion = "4.1.1"
-val MedeiaVersion = "0.4.2"
+val MedeiaVersion = "0.4.3"
 val Log4CatsVersion = "1.1.1"
 
 lazy val root = (project in file("."))

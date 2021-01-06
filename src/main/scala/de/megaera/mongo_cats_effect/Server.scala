@@ -16,7 +16,7 @@ import scala.concurrent.ExecutionContext.global
 object Server {
   implicit def unsafeLogger[F[_]: Sync]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLogger[F]
 
-  def stream[F[_]: ConcurrentEffect](implicit T: Timer[F]): Stream[F, Nothing] = {
+  def stream[F[_]: ConcurrentEffect: Timer]: Stream[F, Nothing] = {
     for {
       httpClient <- BlazeClientBuilder[F](global).stream
       jokesCollection <- Stream.resource(MongoCollectionResource.create[F]())
@@ -26,10 +26,6 @@ object Server {
 
       _ <- jokesWebRepo.get.through(jokesMongoRepo.write).foldMonoid.evalMap(count => Logger[F].info(s"Imported $count"))
 
-      // Combine Service Routes into an HttpApp.
-      // Can also be done via a Router if you
-      // want to extract a segments not checked
-      // in the underlying routes.
       httpApp = (
         Routes.helloWorldRoutes[F](helloWorldAlg) <+>
         Routes.jokeRoutes[F](jokesMongoRepo)
