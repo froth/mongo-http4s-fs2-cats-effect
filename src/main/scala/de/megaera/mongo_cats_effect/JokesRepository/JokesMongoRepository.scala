@@ -13,8 +13,7 @@ object JokesMongoRepository {
   def apply[F[_] : ConcurrentEffect](C: MongoCollection[Document]): JokesMongoRepository[F] = new JokesMongoRepository[F] {
     override def get: Stream[F, Joke] = {
       for {
-        find <- Stream.eval(Sync[F].delay(C.find()))
-        document <- find.toStream
+        document <- C.find().toStream
         joke <- Stream.fromEither(document.fromBson[Joke].left.map(_.head))
       } yield joke
     }
@@ -23,10 +22,7 @@ object JokesMongoRepository {
 
     private[this] def writeBatch(jokes: List[Joke]): Stream[F, UpdateCount] = {
       val jokeDocuments: List[Document] = jokes.map(_.toBsonDocument)
-      val write = Sync[F].delay(C.insertMany(jokeDocuments))
-      Stream.eval(write)
-        .flatMap(_.toStream)
-        .map(updateResult => UpdateCount(updateResult.getInsertedIds.size()))
+      C.insertMany(jokeDocuments).toStream.map(updateResult => UpdateCount(updateResult.getInsertedIds.size()))
     }
   }
 }
