@@ -4,4 +4,9 @@ target/*
 .bsp/*
 .idea/*
 /project/target/
-/project/project/target
+/project/metals.sbt
+/project/project/
+.vscode/
+.metals/
+project/.bloop/
+.bloop/

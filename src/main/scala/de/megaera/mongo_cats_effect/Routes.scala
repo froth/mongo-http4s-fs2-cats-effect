@@ -2,7 +2,7 @@ package de.megaera.mongo_cats_effect
 
 import cats.effect.Sync
 import cats.implicits._
-import de.megaera.mongo_cats_effect.JokesRepository.JokesReadRepository
+import de.megaera.mongo_cats_effect.repo.JokesReadRepository
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 

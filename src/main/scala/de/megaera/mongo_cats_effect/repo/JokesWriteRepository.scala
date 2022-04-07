@@ -1,4 +1,4 @@
-package de.megaera.mongo_cats_effect.JokesRepository
+package de.megaera.mongo_cats_effect.repo
 
 import cats.Monoid
 import cats.implicits.catsSyntaxSemigroup

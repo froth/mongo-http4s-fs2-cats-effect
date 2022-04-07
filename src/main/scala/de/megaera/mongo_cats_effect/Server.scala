@@ -1,27 +1,26 @@
 package de.megaera.mongo_cats_effect
 
-import cats.effect.{ConcurrentEffect, Sync, Timer}
-import cats.implicits._
-import de.megaera.mongo_cats_effect.JokesRepository.{JokesMongoRepository, JokesWebRepository}
+import cats.effect._
+import cats.syntax.all._
+import com.comcast.ip4s._
 import fs2.Stream
-import io.chrisdavenport.log4cats.{Logger, SelfAwareStructuredLogger}
-import org.http4s.client.blaze.BlazeClientBuilder
+import org.http4s.ember.client.EmberClientBuilder
+import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits._
-import org.http4s.server.blaze.BlazeServerBuilder
-import org.http4s.server.middleware.{Logger => LoggerMiddleware}
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
-
-import scala.concurrent.ExecutionContext.global
+import de.megaera.mongo_cats_effect.repo._
+import org.typelevel.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.Logger
+import org.http4s.server.middleware.{Logger => LoggerMiddleware} 
 
 object Server {
-  implicit def unsafeLogger[F[_]: Sync]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLogger[F]
+  implicit def unsafeLogger[F[_]: Sync] = Slf4jLogger.getLogger[F]
 
   /*
     Import jokes from internet into mongo on startup and stream via http on request
    */
-  def stream[F[_]: ConcurrentEffect: Timer]: Stream[F, Nothing] = {
+  def stream[F[_]: Async]: Stream[F, Nothing] = {
     for {
-      httpClient <- BlazeClientBuilder[F](global).stream
+      httpClient <- Stream.resource(EmberClientBuilder.default[F].build)
       jokesCollection <- Stream.resource(MongoCollectionResource.create[F]())
       jokesMongoRepo = JokesMongoRepository[F](jokesCollection)
       jokesWebRepo = JokesWebRepository[F](httpClient)
@@ -38,10 +37,12 @@ object Server {
       // With Middlewares in place
       finalHttpApp = LoggerMiddleware.httpApp(logHeaders = true, logBody = true)(httpApp)
 
-      exitCode <- BlazeServerBuilder[F](global)
-        .bindHttp(8080, "0.0.0.0")
+      exitCode <- Stream.resource(EmberServerBuilder.default[F]
+         .withHost(ipv4"0.0.0.0")
+         .withPort(port"8080")
         .withHttpApp(finalHttpApp)
-        .serve
+        .build >> Resource.eval(Async[F].never)
+      )
     } yield exitCode
   }.drain
 }

@@ -1,19 +1,19 @@
-package de.megaera.mongo_cats_effect.JokesRepository
+package de.megaera.mongo_cats_effect.repo
 
-import cats.effect.{ConcurrentEffect, Sync}
 import de.megaera.mongo_cats_effect.model.Joke
-import fs2.{Pipe, Stream}
 import fs2.interop.reactivestreams._
+import fs2.{Pipe, Stream}
 import org.mongodb.scala.{Document, MongoCollection}
 import medeia.syntax._
+import cats.effect.kernel.Async
 
 trait JokesMongoRepository[F[_]] extends JokesReadRepository[F] with JokesWriteRepository[F]
 
 object JokesMongoRepository {
-  def apply[F[_] : ConcurrentEffect](C: MongoCollection[Document]): JokesMongoRepository[F] = new JokesMongoRepository[F] {
+  def apply[F[_]: Async](C: MongoCollection[Document]): JokesMongoRepository[F] = new JokesMongoRepository[F] {
     override def get: Stream[F, Joke] = {
       for {
-        document <- C.find().toStream
+        document <- C.find().toStreamBuffered(10)
         joke <- Stream.fromEither(document.fromBson[Joke].left.map(_.head))
       } yield joke
     }
@@ -22,7 +22,7 @@ object JokesMongoRepository {
 
     private[this] def writeBatch(jokes: List[Joke]): Stream[F, UpdateCount] = {
       val jokeDocuments: List[Document] = jokes.map(_.toBsonDocument)
-      C.insertMany(jokeDocuments).toStream.map(updateResult => UpdateCount(updateResult.getInsertedIds.size()))
+      C.insertMany(jokeDocuments).toStreamBuffered(10).map(updateResult => UpdateCount(updateResult.getInsertedIds.size()))
     }
   }
 }
